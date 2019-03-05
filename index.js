@@ -17,11 +17,11 @@ let authors = [
     id: "afa5b6f1-344d-11e9-a414-719c6709cf3e",
     born: 1821
   },
-  { 
+  {
     name: 'Joshua Kerievsky', // birthyear not known
     id: "afa5b6f2-344d-11e9-a414-719c6709cf3e",
   },
-  { 
+  {
     name: 'Sandi Metz', // birthyear not known
     id: "afa5b6f3-344d-11e9-a414-719c6709cf3e",
   },
@@ -60,7 +60,7 @@ let books = [
     author: 'Joshua Kerievsky',
     id: "afa5de01-344d-11e9-a414-719c6709cf3e",
     genres: ['refactoring', 'patterns']
-  },  
+  },
   {
     title: 'Practical Object-Oriented Design, An Agile Primer Using Ruby',
     published: 2012,
@@ -91,9 +91,13 @@ const typeDefs = gql`
 	   published: Int!
 	   author: String!
 	   genres: [String!]
-	): Book!
+  ): Book
+  editAuthor(
+    name: String!
+    setBornTo: Int
+  ): Author
   }
-  
+
   type Book {
 	  title: String!
 	  published: Int!
@@ -106,9 +110,9 @@ const typeDefs = gql`
 	  name: String!
 	  born: Int
 	  id: ID!
-	  bookCount: Int		
+	  bookCount: Int
   }
-  
+
   type Query {
 	  bookCount: Int!
 	  authorCount: Int!
@@ -117,13 +121,13 @@ const typeDefs = gql`
   }
 `
 
-const resolvers = {	
+const resolvers = {
   Query: {
 	  bookCount: () => books.length,
 	  authorCount: () => authors.length,
 	  allBooks: (root, args) => {
 		  let booksWanted
-		  
+
 		  if (args.author && args.genre) {
 			  console.log(uuid())
 			  booksWanted = books.filter(b => b.author === args.author)
@@ -157,8 +161,18 @@ const resolvers = {
       const book = { ...args, id: uuid() }
       books = books.concat(book)
       return book
+    },
+    editAuthor: (root, args) => {
+      const author = authors.find(a => a.name === args.name)
+      if (!author) {
+        return null
+      }
+
+      const updatedAuthor = {...author, born: args.setBornTo}
+      authors = authors.map(a => a.name === args.name ? updatedAuthor : a)
+      return updatedAuthor
     }
-  }
+  },
 }
 
 const server = new ApolloServer({

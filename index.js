@@ -94,7 +94,16 @@ const resolvers = {
       const authorObj = await Author.findOne({name: args.author})
       console.log('Auth obj:: ', authorObj)
       const book = new Book({ ...args, author: authorObj })
-      return book.save()
+
+      try {
+        await book.save()
+      } catch (error) {
+        throw new UserInputError(error.message, {
+          invalidArgs: args,
+        })
+      }
+
+      return book
     },
     editAuthor: async (root, args) => {
       console.log('EDIT:: ', args)
@@ -104,7 +113,16 @@ const resolvers = {
       }
       author.born = args.setBornTo
       console.log('NEW AUTHOR:: ', author)
-      return author.save()
+
+      try {
+        await author.save()
+      } catch (error) {
+        throw new UserInputError(error.message, {
+          invalidArgs: args,
+        })
+      }
+
+      return author
     }
   },
 }

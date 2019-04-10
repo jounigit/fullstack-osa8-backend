@@ -59,9 +59,9 @@ const typeDefs = gql`
 
 const resolvers = {
   Query: {
-    bookCount: () => books.length,
-    authorCount: () => authors.length,
-    allBooks: (root, args) => {
+    bookCount: () => Book.collection.countDocuments(),
+    authorCount: () => Author.collection.countDocuments(),
+    allBooks: async (root, args) => {
       let booksWanted
 
       if (args.author && args.genre) {
@@ -72,11 +72,10 @@ const resolvers = {
         return books.filter(b => b.author === args.author)
       }
       else if (args.genre) {
-        return books.filter(b => b.genres.includes(args.genre))
+        const books = await Book.find( { genres: { $in: [ args.genre ] } } )
+        return books
       }
       else {
-        const authorObj = Author.findOne({name: "Martin Fowler"})
-        console.log('Auth obj:: ', authorObj)
         return Book.find({})
       }
     },
@@ -84,8 +83,9 @@ const resolvers = {
     findAuthor: (root, args) =>  Author.findOne({name: args.name})
   },
   Author: {
-    bookCount: (root) => {
-      return books.filter(b => b.author === root.name).length
+    bookCount: async (root) => {
+      const books = await Book.find( { author: { $in: [ root._id ] } } )
+      return books.length
     }
   },
   Mutation: {
@@ -96,16 +96,15 @@ const resolvers = {
       const book = new Book({ ...args, author: authorObj })
       return book.save()
     },
-    editAuthor: (root, args) => {
+    editAuthor: async (root, args) => {
       console.log('EDIT:: ', args)
-      const author = authors.find(a => a.name === args.name)
+      const author = await Author.findOne({name: args.name})
       if (!author) {
         return null
       }
-
-      const updatedAuthor = { ...author, born: args.setBornTo }
-      authors = authors.map(a => a.name === args.name ? updatedAuthor : a)
-      return updatedAuthor
+      author.born = args.setBornTo
+      console.log('NEW AUTHOR:: ', author)
+      return author.save()
     }
   },
 }

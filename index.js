@@ -139,10 +139,15 @@ const resolvers = {
       }
 
       if (!authorObj) {
-        console.log(args.author)
         const newAuthor = new Author({name: args.author})
-        saved = await newAuthor.save()
-        console.log('UUSI:: ', saved)
+        console.log('NEW:: ', newAuthor)
+        try {
+          await newAuthor.save()
+        } catch (error) {
+          throw new UserInputError(error.message, {
+            invalidArgs: args,
+          })
+        }
         authorObj = newAuthor
       }
       console.log('Auth obj:: ', authorObj)

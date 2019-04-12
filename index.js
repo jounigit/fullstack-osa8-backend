@@ -132,14 +132,21 @@ const resolvers = {
       return { value: jwt.sign(userForToken, JWT_SECRET) }
     },
     addBook: async (root, args, context) => {
-      const authorObj = await Author.findOne({name: args.author})
-      console.log('Auth obj:: ', authorObj)
-      const book = new Book({ ...args, author: authorObj })
       const currentUser = context.currentUser
-
+      const authorObj = await Author.findOne({name: args.author})
       if (!currentUser) {
         throw new AuthenticationError("not authenticated")
       }
+
+      if (!authorObj) {
+        console.log(args.author)
+        const newAuthor = new Author({name: args.author})
+        saved = await newAuthor.save()
+        console.log('UUSI:: ', saved)
+        authorObj = newAuthor
+      }
+      console.log('Auth obj:: ', authorObj)
+      const book = new Book({ ...args, author: authorObj  })
 
       try {
         await book.save()

@@ -53,12 +53,16 @@ type Token {
     findAuthor(name: String!): Author
     me: User
   }
+  
+  input AuthorInput {
+  	_id: ID!
+  }
 
   type Mutation {
 	  addBook(
   	   title: String!
   	   published: Int!
-  	   author: String!
+  	   author: AuthorInput!
   	   genres: [String!]
     ): Book
 
@@ -131,13 +135,15 @@ const resolvers = {
   
       return { value: jwt.sign(userForToken, JWT_SECRET) }
     },
-    addBook: async (root, args, context) => {
-      const currentUser = context.currentUser
-      const authorObj = await Author.findOne({name: args.author})
+    addBook: async (root, args) => {
+      //const currentUser = context.currentUser
+     // const authorObj = await Author.findOne({name: args.author})
+      /*
       if (!currentUser) {
         throw new AuthenticationError("not authenticated")
       }
-
+      */
+/*
       if (!authorObj) {
         const newAuthor = new Author({name: args.author})
         console.log('NEW:: ', newAuthor)
@@ -150,8 +156,9 @@ const resolvers = {
         }
         authorObj = newAuthor
       }
-      console.log('Auth obj:: ', authorObj)
-      const book = new Book({ ...args, author: authorObj  })
+      */
+      console.log('Auth obj:: ', args)
+      const book = new Book({ ...args, author: args.author  })
 
       try {
         await book.save()

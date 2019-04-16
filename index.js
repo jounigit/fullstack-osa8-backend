@@ -62,7 +62,7 @@ type Token {
 	  addBook(
   	   title: String!
   	   published: Int!
-  	   author: AuthorInput!
+  	   author: String!
   	   genres: [String!]
     ): Book
 
@@ -79,12 +79,16 @@ type Token {
       username: String!
       password: String!
     ): Token
+    createAuthor(
+    	name: String!
+    ): Author
   }
 `
 
 const JWT_SECRET = 'NEED_HERE_A_SECRET_KEY'
 
 const resolvers = {
+  //****** QUERIES  *********/ 
   Query: {
     bookCount: () => Book.collection.countDocuments(),
     authorCount: () => Author.collection.countDocuments(),
@@ -110,11 +114,22 @@ const resolvers = {
       return books.length
     }
   },
+  //****** MUTATIONS  *********/
   Mutation: {
     createUser: (root, args) => {
       const user = new User({ ...args })
   
       return user.save()
+        .catch(error => {
+          throw new UserInputError(error.message, {
+            invalidArgs: args,
+          })
+        })
+    },
+    createAuthor: (root, args) => {
+      const author = new Author({ ...args })
+  
+      return author.save()
         .catch(error => {
           throw new UserInputError(error.message, {
             invalidArgs: args,
@@ -135,30 +150,32 @@ const resolvers = {
   
       return { value: jwt.sign(userForToken, JWT_SECRET) }
     },
-    addBook: async (root, args) => {
-      //const currentUser = context.currentUser
-     // const authorObj = await Author.findOne({name: args.author})
-      /*
+    addBook: async (root, args, context) => {
+      const currentUser = context.currentUser
+ 
       if (!currentUser) {
         throw new AuthenticationError("not authenticated")
       }
-      */
-/*
+      
+      
+      let authorObj = await Author.findOne({name: args.author})
+/**/
       if (!authorObj) {
         const newAuthor = new Author({name: args.author})
         console.log('NEW:: ', newAuthor)
         try {
-          await newAuthor.save()
+          const addedA = await newAuthor.save()
+          console.log('Added Auth:: ', addedA)
+          authorObj = addedA
         } catch (error) {
           throw new UserInputError(error.message, {
             invalidArgs: args,
           })
-        }
-        authorObj = newAuthor
+        }     
       }
-      */
-      console.log('Auth obj:: ', args)
-      const book = new Book({ ...args, author: args.author  })
+      
+      console.log('Auth obj:: ', authorObj)
+      const book = new Book({ ...args, author: authorObj  })
 
       try {
         await book.save()

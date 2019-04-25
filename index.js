@@ -98,7 +98,11 @@ const resolvers = {
   Query: {
     bookCount: () => Book.collection.countDocuments(),
     authorCount: () => Author.collection.countDocuments(),
-    allAuthors: () => Author.find({}),
+    allAuthors: () => {
+      const authors = Author.find({})
+      console.log('find.author')
+      return authors
+    },
     findAuthor: (root, args) =>  Author.findOne({name: args.name}),
     me: (root, args, context) => {
       return context.currentUser
@@ -117,6 +121,7 @@ const resolvers = {
   Author: {
     bookCount: async (root) => {
       const books = await Book.find( { author: { $in: [ root._id ] } } )
+      console.log('Book.find')
       return books.length
     }
   },

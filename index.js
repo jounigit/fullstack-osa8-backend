@@ -2,6 +2,7 @@ const { ApolloServer, UserInputError, AuthenticationError, gql } = require('apol
 const { PubSub } = require('apollo-server')
 const pubsub = new PubSub()
 const mongoose = require('mongoose')
+require('dotenv').config()
 const jwt = require('jsonwebtoken')
 const Book = require('./models/book')
 const Author = require('./models/author')
@@ -9,7 +10,7 @@ const User = require('./models/user')
 
 mongoose.set('useFindAndModify', false)
 
-const MONGODB_URI = 'mongodb://fullstack8:Fjwid2DttdeQ6Y2@ds231549.mlab.com:31549/graphql'
+const MONGODB_URI = process.env.MONGODB_URI
 
 console.log('connecting to ', MONGODB_URI)
 
@@ -55,7 +56,7 @@ const typeDefs = gql`
     findAuthor(name: String!): Author
     me: User
   }
-  
+
   input AuthorInput {
   	_id: ID!
   }
@@ -88,13 +89,13 @@ const typeDefs = gql`
 
   type Subscription {
   bookAdded: Book!
-} 
+}
 `
 
 const JWT_SECRET = 'NEED_HERE_A_SECRET_KEY'
 
 const resolvers = {
-  //****** QUERIES  *********/ 
+  //****** QUERIES  *********/
   Query: {
     bookCount: () => Book.collection.countDocuments(),
     authorCount: () => Author.collection.countDocuments(),
@@ -129,7 +130,7 @@ const resolvers = {
   Mutation: {
     createUser: (root, args) => {
       const user = new User({ ...args })
-  
+
       return user.save()
         .catch(error => {
           throw new UserInputError(error.message, {
@@ -139,7 +140,7 @@ const resolvers = {
     },
     createAuthor: (root, args) => {
       const author = new Author({ ...args })
-  
+
       return author.save()
         .catch(error => {
           throw new UserInputError(error.message, {
@@ -149,26 +150,26 @@ const resolvers = {
     },
     login: async (root, args) => {
       const user = await User.findOne({ username: args.username })
-  
+
       if ( !user || args.password !== 'secred' ) {
         throw new UserInputError("wrong credentials")
       }
-  
+
       const userForToken = {
         username: user.username,
         id: user._id,
       }
-  
+
       return { value: jwt.sign(userForToken, JWT_SECRET) }
     },
     addBook: async (root, args, context) => {
       const currentUser = context.currentUser
- 
+
       if (!currentUser) {
         throw new AuthenticationError("not authenticated")
       }
-      
-      
+
+
       let authorObj = await Author.findOne({name: args.author})
 /**/
       if (!authorObj) {
@@ -182,9 +183,9 @@ const resolvers = {
           throw new UserInputError(error.message, {
             invalidArgs: args,
           })
-        }     
+        }
       }
-      
+
       console.log('Auth obj:: ', authorObj)
       const book = new Book({ ...args, author: authorObj  })
 
